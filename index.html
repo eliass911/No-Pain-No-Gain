@@ -532,7 +532,7 @@
   <div class="hero-content">
     <div class="hero-top">
       <div>
-        <h1>🥇 Mes challenges</h1>
+        <h1>🥇 Mes Runs 🥇</h1>
         <p class="hero-subtitle">Suivez vos courses à pied</p>
       </div>
       <button class="fab" id="btn-open-modal" aria-label="Ajouter une course">
@@ -844,7 +844,7 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `mes-challenges-${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `🥇 Mes Runs 🥇-${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   });
