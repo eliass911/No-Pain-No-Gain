@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mes Runs">
+<meta name="theme-color" content="#1e3a8a">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%231e3a8a'/%3E%3Cstop offset='1' stop-color='%2338bdf8'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='180' height='180' rx='40' fill='url(%23g)'/%3E%3Ctext x='50%25' y='50%25' font-size='110' text-anchor='middle' dy='.35em'%3E🥇%3C/text%3E%3C/svg%3E">
+<title>Mes Runs</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f1f5f9;
+    color: #0f172a;
+    min-height: 100vh;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Header avec dégradé */
+  .hero {
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #38bdf8 100%);
+    padding: calc(env(safe-area-inset-top) + 24px) 20px 50px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    margin-top: calc(env(safe-area-inset-top) * -1);
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%; right: -20%;
+    width: 300px; height: 300px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -30%; left: -10%;
+    width: 200px; height: 200px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .hero-content { position: relative; z-index: 1; max-width: 600px; margin: 0 auto; }
+  .hero-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .hero h1 {
+    font-size: 30px;
+    margin: 0 0 4px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .hero-subtitle {
+    font-size: 14px;
+    opacity: 0.9;
+    margin: 0;
+  }
+
+  /* Bouton + flottant dans le hero */
+  .fab {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: white;
+    color: #4f46e5;
+    border: none;
+    font-size: 28px;
+    font-weight: 300;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+    flex-shrink: 0;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .fab:active {
+    transform: scale(0.92);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .fab span { line-height: 1; margin-top: -2px; }
+
+  /* Modale */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 100;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    animation: fadeIn 0.2s ease-out;
+  }
+  .modal-overlay.open { display: flex; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slideUpModal {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  .modal {
+    background: white;
+    width: 100%;
+    max-width: 600px;
+    max-height: 92vh;
+    overflow-y: auto;
+    border-radius: 24px 24px 0 0;
+    padding: 8px 20px 24px;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+    animation: slideUpModal 0.3s ease-out;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.2);
+  }
+  .modal-handle {
+    width: 40px;
+    height: 4px;
+    background: #cbd5e1;
+    border-radius: 2px;
+    margin: 8px auto 16px;
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+  }
+  .modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #64748b;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .modal-close:active { background: #e2e8f0; }
+
+  .app {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 0 16px 16px;
+  }
+
+  /* Stats cards (sortent du hero) */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: -30px;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 2;
+  }
+  .stat-card {
+    background: white;
+    border-radius: 16px;
+    padding: 14px;
+    box-shadow: 0 4px 20px rgba(79, 70, 229, 0.1);
+    transition: transform 0.2s;
+  }
+  .stat-card:active { transform: scale(0.98); }
+  .stat-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    margin-bottom: 8px;
+  }
+  .stat-icon.purple { background: linear-gradient(135deg, #4f46e5, #a855f7); }
+  .stat-icon.pink { background: linear-gradient(135deg, #ec4899, #f43f5e); }
+  .stat-icon.orange { background: linear-gradient(135deg, #f59e0b, #ef4444); }
+  .stat-icon.green { background: linear-gradient(135deg, #10b981, #059669); }
+  .stat-label {
+    font-size: 11px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+  .stat-value {
+    font-size: 22px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-top: 2px;
+    letter-spacing: -0.5px;
+  }
+  .stat-value.small {
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .card {
+    background: white;
+    border-radius: 18px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+  }
+  .card-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #0f172a;
+  }
+  .card-title-icon {
+    width: 32px; height: 32px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #4f46e5, #a855f7);
+    display: flex; align-items: center; justify-content: center;
+    color: white;
+    font-size: 16px;
+  }
+
+  label {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 6px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  input, select, button {
+    font-family: inherit;
+    font-size: 16px;
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    background: #f8fafc;
+    color: #0f172a;
+    margin-bottom: 12px;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: all 0.2s;
+  }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%234f46e5' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: #4f46e5;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+  }
+
+  .time-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .time-grid input { margin-bottom: 0; text-align: center; font-weight: 600; }
+
+  button.primary {
+    background: linear-gradient(135deg, #4f46e5, #a855f7);
+    color: white;
+    border: none;
+    font-weight: 700;
+    padding: 16px;
+    cursor: pointer;
+    font-size: 16px;
+    letter-spacing: 0.3px;
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  button.primary:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+  }
+
+  button.secondary {
+    background: white;
+    color: #4f46e5;
+    border: 1.5px solid #e2e8f0;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 12px;
+    transition: all 0.15s;
+  }
+  button.secondary:active {
+    background: #f1f5f9;
+    border-color: #4f46e5;
+  }
+
+  button.danger {
+    background: transparent;
+    color: #ef4444;
+    border: none;
+    width: auto;
+    padding: 6px 10px;
+    margin: 0;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.15s;
+  }
+  button.danger:active { background: #fee2e2; }
+
+  button.edit-btn {
+    background: transparent;
+    color: #4f46e5;
+    border: none;
+    width: auto;
+    padding: 6px 10px;
+    margin: 0;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.15s;
+  }
+  button.edit-btn:active { background: #ede9fe; }
+
+  .run-actions { display: flex; gap: 4px; }
+
+  .card.editing {
+    background: linear-gradient(white, white) padding-box,
+                linear-gradient(135deg, #f59e0b, #ef4444) border-box;
+    border: 2px solid transparent;
+    box-shadow: 0 8px 24px rgba(245, 158, 11, 0.2);
+  }
+
+  .edit-banner {
+    background: linear-gradient(135deg, #fef3c7, #fed7aa);
+    color: #92400e;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+  .edit-banner button {
+    width: auto;
+    padding: 6px 12px;
+    margin: 0;
+    font-size: 12px;
+    background: white;
+    border: 1.5px solid #92400e;
+    color: #92400e;
+    cursor: pointer;
+    font-weight: 600;
+    border-radius: 8px;
+  }
+
+  .filters {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .filters select { margin-bottom: 0; flex: 1; }
+
+  /* Cartes de course */
+  .run-card {
+    background: white;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+    border-left: 4px solid #4f46e5;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .run-card:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+  }
+  /* Couleur du bord selon distance */
+  .run-card.dist-5 { border-left-color: #10b981; }
+  .run-card.dist-10 { border-left-color: #06b6d4; }
+  .run-card.dist-15 { border-left-color: #4f46e5; }
+  .run-card.dist-20 { border-left-color: #a855f7; }
+  .run-card.dist-semi { border-left-color: #ec4899; }
+  .run-card.dist-marathon { border-left-color: #f59e0b; }
+
+  .run-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .run-name {
+    font-weight: 700;
+    font-size: 16px;
+    color: #0f172a;
+  }
+  .run-meta {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 4px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .run-meta span { display: inline-flex; align-items: center; gap: 4px; }
+  .run-stats {
+    display: flex;
+    gap: 12px;
+    padding-top: 12px;
+    margin-top: 12px;
+    border-top: 1px dashed #e2e8f0;
+  }
+  .run-stat { flex: 1; text-align: center; }
+  .run-stat-label {
+    font-size: 10px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+  .run-stat-value {
+    font-size: 15px;
+    font-weight: 700;
+    margin-top: 4px;
+    color: #0f172a;
+  }
+  .run-stat-value.highlight {
+    background: linear-gradient(135deg, #4f46e5, #a855f7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .empty {
+    text-align: center;
+    color: #64748b;
+    padding: 50px 20px;
+    background: white;
+    border-radius: 18px;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+  }
+  .empty-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
+
+  .msg {
+    font-size: 13px;
+    min-height: 18px;
+    margin-top: 6px;
+    font-weight: 600;
+  }
+  .msg.error { color: #ef4444; }
+  .msg.success { color: #10b981; }
+
+  .actions-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .actions-row button { margin-bottom: 0; }
+
+  /* Animation d'apparition */
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .run-card { animation: slideUp 0.3s ease-out; }
+
+  /* Dark mode */
+  @media (prefers-color-scheme: dark) {
+    body { background: #0f172a; color: #f1f5f9; }
+    .card, .stat-card, .run-card, .empty {
+      background: #1e293b;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+    .stat-value, .run-name, .run-stat-value, .card-title { color: #f1f5f9; }
+    input, select {
+      background: #0f172a;
+      border-color: #334155;
+      color: #f1f5f9;
+    }
+    input:focus, select:focus { background: #1e293b; }
+    button.secondary { background: #1e293b; color: #a78bfa; border-color: #334155; }
+    .run-stats { border-top-color: #334155; }
+    .stat-label, .run-meta, .run-stat-label, .empty, label { color: #94a3b8; }
+    .modal { background: #1e293b; }
+    .modal-handle { background: #475569; }
+    .modal-close { background: #334155; color: #cbd5e1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-content">
+    <div class="hero-top">
+      <div>
+        <h1>🥇 Mes challenges</h1>
+        <p class="hero-subtitle">Suivez vos courses à pied</p>
+      </div>
+      <button class="fab" id="btn-open-modal" aria-label="Ajouter une course">
+        <span>+</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modale formulaire -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h2>
+        <span class="card-title-icon" id="form-title-icon">+</span>
+        <span id="form-title">Nouvelle course</span>
+      </h2>
+      <button class="modal-close" id="btn-close-modal" aria-label="Fermer">×</button>
+    </div>
+
+    <div class="edit-banner" id="edit-banner" style="display:none;">
+      <span>✏️ Modification en cours</span>
+      <button id="btn-cancel-edit">Annuler</button>
+    </div>
+
+    <label>📅 Date</label>
+    <input type="date" id="f-date">
+
+    <label>📏 Distance</label>
+    <select id="f-distance">
+      <option value="5">5 km</option>
+      <option value="10">10 km</option>
+      <option value="15">15 km</option>
+      <option value="20">20 km</option>
+      <option value="21.0975">Semi-marathon (21,0975 km)</option>
+      <option value="42.195">Marathon (42,195 km)</option>
+      <option value="custom">Autre…</option>
+    </select>
+    <input type="number" id="f-distance-custom" step="0.01" placeholder="Distance en km" style="display:none;">
+
+    <label>🏁 Nom de l'épreuve</label>
+    <input type="text" id="f-name" placeholder="Ex : 10 km de Paris">
+
+    <label>📍 Lieu</label>
+    <input type="text" id="f-place" placeholder="Ex : Paris">
+
+    <label>⏱️ Temps (h / min / s)</label>
+    <div class="time-grid">
+      <input type="number" id="f-h" min="0" placeholder="h" inputmode="numeric">
+      <input type="number" id="f-m" min="0" max="59" placeholder="min" inputmode="numeric">
+      <input type="number" id="f-s" min="0" max="59" placeholder="s" inputmode="numeric">
+    </div>
+
+    <button class="primary" id="btn-add">✓ Enregistrer</button>
+    <div class="msg error" id="form-msg"></div>
+  </div>
+</div>
+
+<div class="app">
+
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-icon purple">🏃</div>
+      <div class="stat-label">Courses</div>
+      <div class="stat-value" id="stat-count">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon pink">📏</div>
+      <div class="stat-label">Total km</div>
+      <div class="stat-value" id="stat-km">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon orange">⚡</div>
+      <div class="stat-label">Meilleure allure</div>
+      <div class="stat-value small" id="stat-pace">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green">⏱️</div>
+      <div class="stat-label">Course la + rapide</div>
+      <div class="stat-value small" id="stat-fastest">—</div>
+    </div>
+  </div>
+
+  <div class="filters">
+    <select id="filter-distance">
+      <option value="all">Toutes distances</option>
+      <option value="5">5 km</option>
+      <option value="10">10 km</option>
+      <option value="15">15 km</option>
+      <option value="20">20 km</option>
+      <option value="21.0975">Semi</option>
+      <option value="42.195">Marathon</option>
+    </select>
+    <select id="sort-by">
+      <option value="date-desc">📅 Récent</option>
+      <option value="date-asc">📅 Ancien</option>
+      <option value="distance-desc">📏 Distance ↓</option>
+      <option value="distance-asc">📏 Distance ↑</option>
+      <option value="pace-asc">⚡ Plus rapide</option>
+    </select>
+  </div>
+
+  <div id="list"></div>
+
+  <div class="actions-row" style="margin-top: 16px;">
+    <button class="secondary" id="btn-export">📤 Exporter</button>
+    <button class="secondary" id="btn-import" style="position:relative;">
+      📥 Importer
+      <input type="file" id="file-import" accept=".csv,.json" style="position:absolute;inset:0;opacity:0;cursor:pointer;">
+    </button>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const KEY = 'mesCourses_v1';
+  let runs = [];
+  let editingId = null;
+
+  document.getElementById('f-date').valueAsDate = new Date();
+
+  // Gestion modale
+  const modalOverlay = document.getElementById('modal-overlay');
+
+  function openModal() {
+    modalOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    modalOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+    if (editingId !== null) exitEditMode();
+    document.getElementById('form-msg').textContent = '';
+  }
+
+  document.getElementById('btn-open-modal').addEventListener('click', () => {
+    if (editingId === null) resetForm();
+    openModal();
+  });
+
+  document.getElementById('btn-close-modal').addEventListener('click', closeModal);
+
+  // Fermer en cliquant en dehors de la modale
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) closeModal();
+  });
+
+  const distSelect = document.getElementById('f-distance');
+  const distCustom = document.getElementById('f-distance-custom');
+  distSelect.addEventListener('change', () => {
+    distCustom.style.display = distSelect.value === 'custom' ? 'block' : 'none';
+  });
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      runs = raw ? JSON.parse(raw) : [];
+    } catch(e) { runs = []; }
+  }
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(runs)); }
+    catch(e) { alert('Erreur de sauvegarde'); }
+  }
+
+  function fmtTime(sec) {
+    const h = Math.floor(sec/3600);
+    const m = Math.floor((sec%3600)/60);
+    const s = sec%60;
+    if (h > 0) return `${h}h${String(m).padStart(2,'0')}'${String(s).padStart(2,'0')}"`;
+    return `${m}'${String(s).padStart(2,'0')}"`;
+  }
+
+  function fmtPace(sec, km) {
+    if (!km || !sec) return '—';
+    const paceSec = Math.round(sec / km);
+    const m = Math.floor(paceSec/60);
+    const s = paceSec%60;
+    return `${m}'${String(s).padStart(2,'0')}"/km`;
+  }
+
+  function fmtDate(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString('fr-FR', {day:'2-digit', month:'short', year:'numeric'});
+  }
+
+  function fmtDist(km) {
+    if (km === 21.0975) return 'Semi';
+    if (km === 42.195) return 'Marathon';
+    return km % 1 === 0 ? `${km} km` : `${km.toFixed(2)} km`;
+  }
+
+  function distClass(km) {
+    if (km === 5) return 'dist-5';
+    if (km === 10) return 'dist-10';
+    if (km === 15) return 'dist-15';
+    if (km === 20) return 'dist-20';
+    if (km === 21.0975) return 'dist-semi';
+    if (km === 42.195) return 'dist-marathon';
+    return '';
+  }
+
+  document.getElementById('btn-add').addEventListener('click', () => {
+    const msg = document.getElementById('form-msg');
+    msg.className = 'msg error';
+    msg.textContent = '';
+    const date = document.getElementById('f-date').value;
+    let distance = distSelect.value === 'custom'
+      ? parseFloat(distCustom.value)
+      : parseFloat(distSelect.value);
+    const name = document.getElementById('f-name').value.trim();
+    const place = document.getElementById('f-place').value.trim();
+    const h = parseInt(document.getElementById('f-h').value) || 0;
+    const m = parseInt(document.getElementById('f-m').value) || 0;
+    const s = parseInt(document.getElementById('f-s').value) || 0;
+    const totalSec = h*3600 + m*60 + s;
+    if (!date) { msg.textContent = 'Date requise'; return; }
+    if (!distance || distance <= 0) { msg.textContent = 'Distance requise'; return; }
+    if (totalSec <= 0) { msg.textContent = 'Temps requis'; return; }
+    if (editingId !== null) {
+      const idx = runs.findIndex(r => r.id === editingId);
+      if (idx !== -1) {
+        runs[idx] = { id: editingId, date, distance, name, place, time: totalSec };
+      }
+      save();
+      exitEditMode();
+      render();
+      closeModal();
+    } else {
+      runs.push({ id: Date.now(), date, distance, name, place, time: totalSec });
+      save();
+      resetForm();
+      render();
+      closeModal();
+    }
+  });
+
+  function resetForm() {
+    document.getElementById('f-date').valueAsDate = new Date();
+    distSelect.value = '5';
+    distCustom.style.display = 'none';
+    distCustom.value = '';
+    document.getElementById('f-name').value = '';
+    document.getElementById('f-place').value = '';
+    document.getElementById('f-h').value = '';
+    document.getElementById('f-m').value = '';
+    document.getElementById('f-s').value = '';
+  }
+
+  function enterEditMode(id) {
+    const run = runs.find(r => r.id === id);
+    if (!run) return;
+    editingId = id;
+    document.getElementById('f-date').value = run.date;
+    const presets = [5, 10, 15, 20, 21.0975, 42.195];
+    if (presets.includes(run.distance)) {
+      distSelect.value = String(run.distance);
+      distCustom.style.display = 'none';
+      distCustom.value = '';
+    } else {
+      distSelect.value = 'custom';
+      distCustom.style.display = 'block';
+      distCustom.value = run.distance;
+    }
+    document.getElementById('f-name').value = run.name || '';
+    document.getElementById('f-place').value = run.place || '';
+    document.getElementById('f-h').value = Math.floor(run.time / 3600) || '';
+    document.getElementById('f-m').value = Math.floor((run.time % 3600) / 60) || '';
+    document.getElementById('f-s').value = run.time % 60 || '';
+    document.getElementById('form-title').textContent = 'Modifier la course';
+    document.getElementById('form-title-icon').textContent = '✏️';
+    document.getElementById('edit-banner').style.display = 'flex';
+    document.getElementById('btn-add').textContent = '✓ Mettre à jour';
+    openModal();
+  }
+
+  function exitEditMode() {
+    editingId = null;
+    document.getElementById('form-title').textContent = 'Nouvelle course';
+    document.getElementById('form-title-icon').textContent = '+';
+    document.getElementById('edit-banner').style.display = 'none';
+    document.getElementById('btn-add').textContent = '✓ Enregistrer';
+    resetForm();
+  }
+
+  document.getElementById('btn-cancel-edit').addEventListener('click', () => {
+    closeModal();
+    render();
+  });
+
+  window.editRun = function(id) { enterEditMode(id); };
+  document.getElementById('filter-distance').addEventListener('change', render);
+  document.getElementById('sort-by').addEventListener('change', render);
+
+  document.getElementById('btn-export').addEventListener('click', () => {
+    if (runs.length === 0) { alert('Aucune course à exporter'); return; }
+    const header = 'Date,Distance (km),Nom,Lieu,Temps (s),Temps,Allure';
+    const rows = runs.map(r => [
+      r.date, r.distance,
+      `"${(r.name||'').replace(/"/g,'""')}"`,
+      `"${(r.place||'').replace(/"/g,'""')}"`,
+      r.time, fmtTime(r.time), fmtPace(r.time, r.distance)
+    ].join(','));
+    const csv = [header, ...rows].join('\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `mes-challenges-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('file-import').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const txt = ev.target.result;
+        let imported = [];
+        if (file.name.endsWith('.json')) {
+          imported = JSON.parse(txt);
+        } else {
+          const lines = txt.split(/\r?\n/).filter(l => l.trim());
+          lines.shift();
+          imported = lines.map(l => {
+            const m = l.match(/^([^,]*),([^,]*),"([^"]*)","([^"]*)",([^,]*)/);
+            if (!m) return null;
+            return {
+              id: Date.now() + Math.random(),
+              date: m[1], distance: parseFloat(m[2]),
+              name: m[3], place: m[4], time: parseInt(m[5])
+            };
+          }).filter(Boolean);
+        }
+        if (confirm(`Importer ${imported.length} course(s) ? Elles s'ajouteront aux courses existantes.`)) {
+          runs = runs.concat(imported);
+          save();
+          render();
+        }
+      } catch(err) { alert('Erreur lors de l\'import : ' + err.message); }
+      e.target.value = '';
+    };
+    reader.readAsText(file);
+  });
+
+  window.deleteRun = function(id) {
+    if (!confirm('Supprimer cette course ?')) return;
+    runs = runs.filter(r => r.id !== id);
+    save();
+    if (editingId === id) exitEditMode();
+    render();
+  };
+
+  function render() {
+    document.getElementById('stat-count').textContent = runs.length;
+    const totalKm = runs.reduce((a,r) => a + r.distance, 0);
+    document.getElementById('stat-km').textContent = totalKm.toFixed(1);
+    if (runs.length > 0) {
+      const withPace = runs.map(r => ({...r, pace: r.time / r.distance}));
+      const fastest = withPace.reduce((a,b) => a.pace < b.pace ? a : b);
+      document.getElementById('stat-pace').textContent = fmtPace(fastest.time, fastest.distance);
+      document.getElementById('stat-fastest').textContent = `${fmtDist(fastest.distance)} · ${fmtTime(fastest.time)}`;
+    } else {
+      document.getElementById('stat-pace').textContent = '—';
+      document.getElementById('stat-fastest').textContent = '—';
+    }
+    const filterDist = document.getElementById('filter-distance').value;
+    const sortBy = document.getElementById('sort-by').value;
+    let list = [...runs];
+    if (filterDist !== 'all') {
+      list = list.filter(r => r.distance === parseFloat(filterDist));
+    }
+    list.sort((a,b) => {
+      switch(sortBy) {
+        case 'date-asc': return a.date.localeCompare(b.date);
+        case 'date-desc': return b.date.localeCompare(a.date);
+        case 'distance-asc': return a.distance - b.distance;
+        case 'distance-desc': return b.distance - a.distance;
+        case 'pace-asc': return (a.time/a.distance) - (b.time/b.distance);
+      }
+    });
+    const container = document.getElementById('list');
+    if (list.length === 0) {
+      const emptyIcon = runs.length > 0 ? '🔍' : '🏃';
+      const emptyText = runs.length > 0
+        ? 'Aucune course ne correspond au filtre.'
+        : 'Aucune course enregistrée.<br>Ajoutez votre première course ci-dessus !';
+      container.innerHTML = `<div class="empty"><div class="empty-icon">${emptyIcon}</div>${emptyText}</div>`;
+      return;
+    }
+    container.innerHTML = list.map(r => `
+      <div class="run-card ${distClass(r.distance)}">
+        <div class="run-header">
+          <div style="flex:1; min-width:0;">
+            <div class="run-name">${escapeHtml(r.name) || 'Course sans nom'}</div>
+            <div class="run-meta">
+              <span>📅 ${fmtDate(r.date)}</span>
+              ${r.place ? `<span>📍 ${escapeHtml(r.place)}</span>` : ''}
+            </div>
+          </div>
+          <div class="run-actions">
+            <button class="edit-btn" onclick="editRun(${r.id})" aria-label="Modifier">✏️</button>
+            <button class="danger" onclick="deleteRun(${r.id})" aria-label="Supprimer">🗑️</button>
+          </div>
+        </div>
+        <div class="run-stats">
+          <div class="run-stat"><div class="run-stat-label">Distance</div><div class="run-stat-value">${fmtDist(r.distance)}</div></div>
+          <div class="run-stat"><div class="run-stat-label">Temps</div><div class="run-stat-value">${fmtTime(r.time)}</div></div>
+          <div class="run-stat"><div class="run-stat-label">Allure</div><div class="run-stat-value highlight">${fmtPace(r.time, r.distance)}</div></div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function escapeHtml(s) {
+    if (!s) return '';
+    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  load();
+  render();
+})();
+</script>
+</body>
+</html>
